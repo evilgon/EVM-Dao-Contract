@@ -715,17 +715,17 @@ contract DividendPayingToken is ERC20, Ownable, DividendPayingTokenInterface, Di
 	}
 }
 
-contract ChainLabs is Ownable, ERC20 {
+contract Chainlabs is Ownable, ERC20 {
 	using SafeMath for uint256;
 
 	IUniswapV2Router02 public uniswapV2Router;
 	address public immutable uniswapV2Pair;
 
-	string private constant _name = "ChainLabs";
+	string private constant _name = "Chainlabs";
 	string private constant _symbol = "CHAINLABS";
 	uint8 private constant _decimals = 9;
 
-	ChainLabsDividendTracker public dividendTracker;
+	ChainlabsDividendTracker public dividendTracker;
 	
 	bool public isTradingEnabled;
 	uint256 private _tradingPausedTimestamp;
@@ -744,7 +744,8 @@ contract ChainLabs is Ownable, ERC20 {
 	uint256 public gasForProcessing = 300000;
 	
     //EDIT
-	address public dividendToken = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56; //BUSD
+	//address public dividendToken = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56; //mainet BUSD;
+	 address public dividendToken = 0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee; // testnet
 
 	address public stakingAddress;
 	address public marketingWallet;
@@ -845,7 +846,7 @@ contract ChainLabs is Ownable, ERC20 {
 	event FeesApplied(uint256 liquidityFee, uint256 marketingFee, uint256 devFee, uint256 buyBackFee, uint256 stakingFee, uint256 holdersFee, uint256 totalFee);
 
 	constructor() public ERC20(_name, _symbol) {
-		dividendTracker = new ChainLabsDividendTracker();
+		dividendTracker = new ChainlabsDividendTracker();
 		//dividendTracker.setUniswapRouter(0x10ED43C718714eb63d5aA57B78B54704E256024E);  //MAINET
         dividendTracker.setUniswapRouter(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);  //TESTNET
         dividendTracker.setRewardToken(dividendToken);
@@ -903,7 +904,7 @@ contract ChainLabs is Ownable, ERC20 {
 		_isLaunched = true;
 	}
 	function cancelLaunch() public onlyOwner {
-		require(this.isInLaunch(), "ChainLabs: Launch is not set");
+		require(this.isInLaunch(), "Chainlabs: Launch is not set");
 		_launchStartTimestamp = 0;
 		_launchBlockNumber = 0;
 		_isLaunched = false;
@@ -916,33 +917,33 @@ contract ChainLabs is Ownable, ERC20 {
 		_tradingPausedTimestamp = _getNow();
 	}
 	function activateMintOnBlockEmission(address _mintAddress, uint256 _mintAmount) public onlyOwner {
-	    require(!mintOnBlockEmission, "ChainLabs: Mint is already set activate");
+	    require(!mintOnBlockEmission, "Chainlabs: Mint is already set activate");
 	    mintAddress = _mintAddress;
 		mintAmount = _mintAmount;
 		_blockTracker = block.number;
 	    mintOnBlockEmission = true;
 	}
 	function deactivateMintOnBlockEmission() public onlyOwner {
-	    require(mintOnBlockEmission, "ChainLabs: Mint is already set deactivate");
+	    require(mintOnBlockEmission, "Chainlabs: Mint is already set deactivate");
 	    mintOnBlockEmission = false;
 		_blockTracker = 0;
 	}
 	function setGoldenHour() public onlyOwner {
-		require(!this.isInGoldenHour(), "ChainLabs: Golden Hour is already set");
-		require(isTradingEnabled, "ChainLabs: Trading must be enabled first");
-		require(!this.isInLaunch(), "ChainLabs: Must not be in launch period");
+		require(!this.isInGoldenHour(), "Chainlabs: Golden Hour is already set");
+		require(isTradingEnabled, "Chainlabs: Trading must be enabled first");
+		require(!this.isInLaunch(), "Chainlabs: Must not be in launch period");
 		emit GoldenHourChange(true, false);
 		_goldenHourStartTimestamp = _getNow();
 	}
 	function cancelGoldenHour() public onlyOwner {
-		require(this.isInGoldenHour(), "ChainLabs: Golden Hour is not set");
+		require(this.isInGoldenHour(), "Chainlabs: Golden Hour is not set");
 		emit GoldenHourChange(false, true);
 		_goldenHourStartTimestamp = 0;
 	}
 	function updateDividendTracker(address newAddress) public onlyOwner {
-		require(newAddress != address(dividendTracker), "ChainLabs: The dividend tracker already has that address");
-		ChainLabsDividendTracker newDividendTracker = ChainLabsDividendTracker(payable(newAddress));
-		require(newDividendTracker.owner() == address(this), "ChainLabs: The new dividend tracker must be owned by the ChainLabs token contract");
+		require(newAddress != address(dividendTracker), "Chainlabs: The dividend tracker already has that address");
+		ChainlabsDividendTracker newDividendTracker = ChainlabsDividendTracker(payable(newAddress));
+		require(newDividendTracker.owner() == address(this), "Chainlabs: The new dividend tracker must be owned by the Chainlabs token contract");
 		newDividendTracker.excludeFromDividends(address(newDividendTracker));
 		newDividendTracker.excludeFromDividends(address(this));
 		newDividendTracker.excludeFromDividends(owner());
@@ -952,7 +953,7 @@ contract ChainLabs is Ownable, ERC20 {
 		dividendTracker = newDividendTracker;
 	}
 	function _setAutomatedMarketMakerPair(address pair, bool value) private {
-		require(automatedMarketMakerPairs[pair] != value, "ChainLabs: Automated market maker pair is already set to that value");
+		require(automatedMarketMakerPairs[pair] != value, "Chainlabs: Automated market maker pair is already set to that value");
 		automatedMarketMakerPairs[pair] = value;
 		if(value) {
 			dividendTracker.excludeFromDividends(pair);
@@ -964,7 +965,7 @@ contract ChainLabs is Ownable, ERC20 {
 		emit AllowedWhenTradingDisabledChange(account, allowed);
 	}
 	function excludeFromFees(address account, bool excluded) public onlyOwner {
-		require(_isExcludedFromFee[account] != excluded, "ChainLabs: Account is already the value of 'excluded'");
+		require(_isExcludedFromFee[account] != excluded, "Chainlabs: Account is already the value of 'excluded'");
 		_isExcludedFromFee[account] = excluded;
 		emit ExcludeFromFeesChange(account, excluded);
 	}
@@ -972,53 +973,53 @@ contract ChainLabs is Ownable, ERC20 {
 		dividendTracker.excludeFromDividends(account);
 	}
 	function excludeFromMaxTransactionLimit(address account, bool excluded) public onlyOwner {
-		require(_isExcludedFromMaxTransactionLimit[account] != excluded, "ChainLabs: Account is already the value of 'excluded'");
+		require(_isExcludedFromMaxTransactionLimit[account] != excluded, "Chainlabs: Account is already the value of 'excluded'");
 		_isExcludedFromMaxTransactionLimit[account] = excluded;
 		emit ExcludeFromMaxTransferChange(account, excluded);
 	}
 	function excludeFromMaxWalletLimit(address account, bool excluded) public onlyOwner {
-		require(_isExcludedFromMaxWalletLimit[account] != excluded, "ChainLabs: Account is already the value of 'excluded'");
+		require(_isExcludedFromMaxWalletLimit[account] != excluded, "Chainlabs: Account is already the value of 'excluded'");
 		_isExcludedFromMaxWalletLimit[account] = excluded;
 		emit ExcludeFromMaxWalletChange(account, excluded);
 	}
 	function blockAccount(address account) public onlyOwner {
 		uint256 currentTimestamp = _getNow();
-		require(!_isBlocked[account], "ChainLabs: Account is already blocked");
+		require(!_isBlocked[account], "Chainlabs: Account is already blocked");
 		if (_isLaunched) {
-			require(currentTimestamp.sub(_launchStartTimestamp) < _blockedTimeLimit, "ChainLabs: Time to block accounts has expired");
+			require(currentTimestamp.sub(_launchStartTimestamp) < _blockedTimeLimit, "Chainlabs: Time to block accounts has expired");
 		}
 		_isBlocked[account] = true;
 		emit BlockedAccountChange(account, true);
 	}
 	function unblockAccount(address account) public onlyOwner {
-		require(_isBlocked[account], "ChainLabs: Account is not blcoked");
+		require(_isBlocked[account], "Chainlabs: Account is not blcoked");
 		_isBlocked[account] = false;
 		emit BlockedAccountChange(account, false);
 	}
 	function setWallets(address newLiquidityWallet, address newMarketingWallet, address newDevWallet, address newBuyBackWallet) public onlyOwner {
 		if(liquidityWallet != newLiquidityWallet) {
-			require(newLiquidityWallet != address(0), "ChainLabs: The liquidityWallet cannot be 0");
+			require(newLiquidityWallet != address(0), "Chainlabs: The liquidityWallet cannot be 0");
 			emit WalletChange('liquidityWallet', newLiquidityWallet, liquidityWallet);
 			liquidityWallet = newLiquidityWallet;
 		}
 		if(marketingWallet != newMarketingWallet) {
-			require(newMarketingWallet != address(0), "ChainLabs: The marketingWallet cannot be 0");
+			require(newMarketingWallet != address(0), "Chainlabs: The marketingWallet cannot be 0");
 			emit WalletChange('marketingWallet', newMarketingWallet, marketingWallet);
 			marketingWallet = newMarketingWallet;
 		}
 		if(devWallet != newDevWallet) {
-			require(newDevWallet != address(0), "ChainLabs: The devWallet cannot be 0");
+			require(newDevWallet != address(0), "Chainlabs: The devWallet cannot be 0");
 			emit WalletChange('devWallet', newDevWallet, devWallet);
 			devWallet = newDevWallet;
 		}
 		if(buyBackWallet != newBuyBackWallet) {
-			require(newBuyBackWallet != address(0), "ChainLabs: The buyBackWallet cannot be 0");
+			require(newBuyBackWallet != address(0), "Chainlabs: The buyBackWallet cannot be 0");
 			emit WalletChange('buyBackWallet', newBuyBackWallet, buyBackWallet);
 			buyBackWallet = newBuyBackWallet;
 		}
 	}
 	function setStakingAddress(address newStakingAddress) public onlyOwner {
-		require(newStakingAddress != address(0), "ChainLabs: The stakingAddress cannot be 0");
+		require(newStakingAddress != address(0), "Chainlabs: The stakingAddress cannot be 0");
 		emit StakingAddressChange(newStakingAddress, stakingAddress);
 		stakingAddress = newStakingAddress;
 	}
@@ -1080,28 +1081,28 @@ contract ChainLabs is Ownable, ERC20 {
 		emit FeeChange('golden2Fees-Sell', _liquidityFeeOnSell, _marketingFeeOnSell, _devFeeOnSell, _buyBackFeeOnSell, _stakingFeeOnSell, _holdersFeeOnSell);
 	}
 	function setUniswapRouter(address newAddress) public onlyOwner {
-		require(newAddress != address(uniswapV2Router), "ChainLabs: The router already has that address");
+		require(newAddress != address(uniswapV2Router), "Chainlabs: The router already has that address");
 		emit UniswapV2RouterChange(newAddress, address(uniswapV2Router));
 		uniswapV2Router = IUniswapV2Router02(newAddress);
 		dividendTracker.setUniswapRouter(newAddress);
 	}
 	function setGasForProcessing(uint256 newValue) public onlyOwner {
-		require(newValue != gasForProcessing, "ChainLabs: Cannot update gasForProcessing to same value");
+		require(newValue != gasForProcessing, "Chainlabs: Cannot update gasForProcessing to same value");
 		emit GasForProcessingChange(newValue, gasForProcessing);
 		gasForProcessing = newValue;
 	}
 	function setMaxTransactionAmount(uint256 newValue) public onlyOwner {
-		require(newValue != maxTxAmount, "ChainLabs: Cannot update maxTxAmount to same value");
+		require(newValue != maxTxAmount, "Chainlabs: Cannot update maxTxAmount to same value");
 		emit MaxTransactionAmountChange(newValue, maxTxAmount);
 		maxTxAmount = newValue;
 	}
 	function setMaxWalletAmount(uint256 newValue) public onlyOwner {
-		require(newValue != maxWalletAmount, "ChainLabs: Cannot update maxWalletAmount to same value");
+		require(newValue != maxWalletAmount, "Chainlabs: Cannot update maxWalletAmount to same value");
 		emit MaxWalletAmountChange(newValue, maxWalletAmount);
 		maxWalletAmount = newValue;
 	}
 	function setMinimumTokensBeforeSwap(uint256 newValue) public onlyOwner {
-		require(newValue != minimumTokensBeforeSwap, "ChainLabs: Cannot update minimumTokensBeforeSwap to same value");
+		require(newValue != minimumTokensBeforeSwap, "Chainlabs: Cannot update minimumTokensBeforeSwap to same value");
 		emit MinTokenAmountBeforeSwapChange(newValue, minimumTokensBeforeSwap);
 		minimumTokensBeforeSwap = newValue;
 	}
@@ -1112,15 +1113,15 @@ contract ChainLabs is Ownable, ERC20 {
 		dividendTracker.processAccount(payable(msg.sender), false);
     }
 	function setDividendToken(address newDividendToken) external onlyOwner {
-		require(newDividendToken != dividendToken, "ChainLabs: Cannot update dividend token to same value");
-		require(newDividendToken != address(0), "ChainLabs: The dividend token cannot be 0");
-		require(newDividendToken != address(this), "ChainLabs: The dividend token cannot be set to the current contract");
+		require(newDividendToken != dividendToken, "Chainlabs: Cannot update dividend token to same value");
+		require(newDividendToken != address(0), "Chainlabs: The dividend token cannot be 0");
+		require(newDividendToken != address(this), "Chainlabs: The dividend token cannot be set to the current contract");
 		emit DividendTokenChange(newDividendToken, dividendToken);
 		dividendToken = newDividendToken;
 		dividendTracker.setRewardToken(dividendToken);
 	}
 	function claimBNBOverflow(uint256 amount) external onlyOwner {
-	    require(amount < address(this).balance, "ChainLabs: Cannot send more than contract balance");
+	    require(amount < address(this).balance, "Chainlabs: Cannot send more than contract balance");
         (bool success,) = address(owner()).call{value : amount}("");
         if (success){
             emit ClaimBNBOverflow(amount);
@@ -1214,17 +1215,17 @@ contract ChainLabs is Ownable, ERC20 {
 			uint256 currentTimestamp = !isTradingEnabled && _tradingPausedTimestamp > _launchStartTimestamp  ? _tradingPausedTimestamp : _getNow();
 
 			if(!_isAllowedToTradeWhenDisabled[from] && !_isAllowedToTradeWhenDisabled[to]) {
-				require(isTradingEnabled, "ChainLabs: Trading is currently disabled.");
-				require(!_isBlocked[to], "ChainLabs: Account is blocked");
-				require(!_isBlocked[from], "ChainLabs: Account is blocked");
+				require(isTradingEnabled, "Chainlabs: Trading is currently disabled.");
+				require(!_isBlocked[to], "Chainlabs: Account is blocked");
+				require(!_isBlocked[from], "Chainlabs: Account is blocked");
 				if (_isInLaunch && currentTimestamp.sub(_launchStartTimestamp) <= 300 && isBuyFromLp) {
-					require(currentTimestamp.sub(_buyTimesInLaunch[to]) > 60, "ChainLabs: Cannot buy more than once per min in first 5min of launch");
+					require(currentTimestamp.sub(_buyTimesInLaunch[to]) > 60, "Chainlabs: Cannot buy more than once per min in first 5min of launch");
 				}
 				if (!_isExcludedFromMaxTransactionLimit[to] && !_isExcludedFromMaxTransactionLimit[from]) {
-					require(amount <= maxTxAmount, "ChainLabs: Buy amount exceeds the maxTxBuyAmount.");
+					require(amount <= maxTxAmount, "Chainlabs: Buy amount exceeds the maxTxBuyAmount.");
 				}
 				if (!_isExcludedFromMaxWalletLimit[to]) {
-					require(balanceOf(to).add(amount) <= maxWalletAmount, "ChainLabs: Expected wallet amount exceeds the maxWalletAmount.");
+					require(balanceOf(to).add(amount) <= maxWalletAmount, "Chainlabs: Expected wallet amount exceeds the maxWalletAmount.");
 				}
 			}
 
@@ -1531,7 +1532,7 @@ contract ChainLabs is Ownable, ERC20 {
 	}
 }
 
-contract ChainLabsDividendTracker is DividendPayingToken {
+contract ChainlabsDividendTracker is DividendPayingToken {
 	using SafeMath for uint256;
 	using SafeMathInt for int256;
 	using IterableMapping for IterableMapping.Map;
@@ -1548,7 +1549,7 @@ contract ChainLabsDividendTracker is DividendPayingToken {
 	event ClaimWaitUpdated(uint256 indexed newValue, uint256 indexed oldValue);
 	event Claim(address indexed account, uint256 amount, bool indexed automatic);
 
-	constructor() public DividendPayingToken("ChainLabs_Dividend_Tracker", "ChainLabs_Dividend_Tracker") {
+	constructor() public DividendPayingToken("Chainlabs_Dividend_Tracker", "Chainlabs_Dividend_Tracker") {
 		claimWait = 3600;
 		minimumTokenBalanceForDividends = 200000000 * (10**18);
 	}
@@ -1559,7 +1560,7 @@ contract ChainLabsDividendTracker is DividendPayingToken {
 	    _setUniswapRouter(router);
 	}
 	function _transfer(address, address, uint256) internal override {
-		require(false, "ChainLabs_Dividend_Tracker: No transfers allowed");
+		require(false, "Chainlabs_Dividend_Tracker: No transfers allowed");
 	}
 	function excludeFromDividends(address account) external onlyOwner {
 		require(!excludedFromDividends[account]);
@@ -1569,12 +1570,12 @@ contract ChainLabsDividendTracker is DividendPayingToken {
 		emit ExcludeFromDividends(account);
 	}
 	function setTokenBalanceForDividends(uint256 newValue) external onlyOwner {
-		require(minimumTokenBalanceForDividends != newValue, "ChainLabs_Dividend_Tracker: minimumTokenBalanceForDividends already the value of 'newValue'.");
+		require(minimumTokenBalanceForDividends != newValue, "Chainlabs_Dividend_Tracker: minimumTokenBalanceForDividends already the value of 'newValue'.");
 		minimumTokenBalanceForDividends = newValue;
 	}
 	function updateClaimWait(uint256 newClaimWait) external onlyOwner {
-		require(newClaimWait >= 3600 && newClaimWait <= 86400, "ChainLabs_Dividend_Tracker: claimWait must be updated to between 1 and 24 hours");
-		require(newClaimWait != claimWait, "ChainLabs_Dividend_Tracker: Cannot update claimWait to same value");
+		require(newClaimWait >= 3600 && newClaimWait <= 86400, "Chainlabs_Dividend_Tracker: claimWait must be updated to between 1 and 24 hours");
+		require(newClaimWait != claimWait, "Chainlabs_Dividend_Tracker: Cannot update claimWait to same value");
 		emit ClaimWaitUpdated(newClaimWait, claimWait);
 		claimWait = newClaimWait;
 	}
